@@ -67,21 +67,73 @@ public class Board {
         return takeBlack;
     }
 
+    public boolean isPathEmpty(int row1, int col1, int row2, int col2) { // Обработка препятствий на пути
+        int temp; // Сортируем ход по возрастанию, чтобы корректно работали следующие циклы
+        if(row1 > row2) {
+            temp = row1;
+            row1 = row2;
+            row2 = temp;
+        }
+        if(col1 > col2) {
+            temp = col1;
+            col1 = col2;
+            col2 = temp;
+        }
+        if (row1 == row2) {
+            for (int i = col1 + 1; i < col2; i++) {
+                if (this.fields[row1][i] != null) {
+                    System.out.println("Вы не можете ходить сквозь другие фигуры!");
+                    return false;
+                }
+            }
+        } else if (col1 == col2) {
+            for (int i = row1 + 1; i < row2; i++) {
+                if (this.fields[i][col1] != null) {
+                    System.out.println("Вы не можете ходить сквозь другие фигуры!");
+                    return false;
+                }
+            }
+        } else {
+            for (int i = row1 + 1; i < row2; i++) {
+                for (int j = col1 + 1; j < col2; j++) {
+                    if (this.fields[i][j] != null) {
+                        System.out.println("Вы не можете ходить сквозь другие фигуры!");
+                        return false;
+                    }
+                    i++;
+                }
+            }
+        }
+        return true;
+}
+
     public boolean move_figure(int row1, int col1, int row2, int col2) {
 
         Figure figure = this.fields[row1][col1];
 
-        if(colorGaming != figure.getColor()) {
+        if (colorGaming != figure.getColor()) { // Обработка попытки хода одной стороны во время хода другой
             System.out.println("Сейчас ходит другая сторона!");
             return false;
         }
 
         if (figure.canMove(row1, col1, row2, col2) && this.fields[row2][col2] == null) {
+            if (!isPathEmpty(row1, col1, row2, col2)) { // Обработка препятствий
+                return false;
+            }
+
             System.out.println("move");
             this.fields[row2][col2] = figure;
             this.fields[row1][col1] = null;
             return true;
         } else if (figure.canAttack(row1, col1, row2, col2) && this.fields[row2][col2] != null && this.fields[row2][col2].getColor() != this.fields[row1][col1].getColor()) {
+            if (!isPathEmpty(row1, col1, row2, col2)) { // Обработка препятствий
+                return false;
+            }
+            if(this.fields[row2][col2] instanceof King) { // Обработка случая нападения на короля
+                System.out.println("Нельзя атаковать короля!");
+                return false;
+            }
+
             System.out.println("attack");
             switch (this.fields[row2][col2].getColor()) {
                 case 'w':
