@@ -22,10 +22,6 @@ public abstract class Figure {
     }
 
     private char color;
-
-    //private int[] position = new int[2];  // 0- row ; 1 - col
-
-
     public Figure(String name, char color) {
         this.name = name;
         this.color = color;

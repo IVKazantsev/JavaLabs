@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 public class Board {
     private final Figure[][] fields = new Figure[8][8];
+    private final int[][] kings = new int[2][2];
     private final ArrayList<String> takeWhite = new ArrayList<>(16);
     private final ArrayList<String> takeBlack = new ArrayList<>(16);
 
@@ -28,8 +29,10 @@ public class Board {
                 new Rook("R", 'w'), new Knight("N", 'w'),
                 new Bishop("B", 'w'), new Queen("Q", 'w'),
                 new King("K", 'w'), new Bishop("B", 'w'),
-                new Knight("N", 'w'), new Rook("R", 'w')
+                new Knight("N", 'w'), new Rook("R", 'w'),
         };
+        this.kings[0] = new int[]{0, 4}; // White King
+
         this.fields[1] = new Figure[]{
                 new Pawn("P", 'w'), new Pawn("P", 'w'),
                 new Pawn("P", 'w'), new Pawn("P", 'w'),
@@ -41,8 +44,9 @@ public class Board {
                 new Rook("R", 'b'), new Knight("N", 'b'),
                 new Bishop("B", 'b'), new Queen("Q", 'b'),
                 new King("K", 'b'), new Bishop("B", 'b'),
-                new Knight("N", 'b'), new Rook("R", 'b')
+                new Knight("N", 'b'), new Rook("R", 'b'),
         };
+        this.kings[1] = new int[]{7, 4}; // Black King
         this.fields[6] = new Figure[]{
                 new Pawn("P", 'b'), new Pawn("P", 'b'),
                 new Pawn("P", 'b'), new Pawn("P", 'b'),
@@ -68,44 +72,97 @@ public class Board {
     }
 
     public boolean isPathEmpty(int row1, int col1, int row2, int col2) { // Обработка препятствий на пути
+        if (this.fields[row1][col1] instanceof Knight) {
+            return true;
+        }
+
         int temp; // Сортируем ход по возрастанию, чтобы корректно работали следующие циклы
-        if(row1 > row2) {
+
+        if (row1 > row2) {
             temp = row1;
             row1 = row2;
             row2 = temp;
-        }
-        if(col1 > col2) {
+
             temp = col1;
             col1 = col2;
             col2 = temp;
         }
         if (row1 == row2) {
-            for (int i = col1 + 1; i < col2; i++) {
-                if (this.fields[row1][i] != null) {
-                    System.out.println("Вы не можете ходить сквозь другие фигуры!");
-                    return false;
+            if (col1 < col2) {
+                for (int i = col1 + 1; i < col2; i++) {
+                    if (this.fields[row1][i] != null) {
+                        return false;
+                    }
+                }
+            } else {
+                for (int i = col1 - 1; i > col2; i--) {
+                    if (this.fields[row1][i] != null) {
+                        return false;
+                    }
                 }
             }
         } else if (col1 == col2) {
             for (int i = row1 + 1; i < row2; i++) {
                 if (this.fields[i][col1] != null) {
-                    System.out.println("Вы не можете ходить сквозь другие фигуры!");
                     return false;
                 }
             }
         } else {
             for (int i = row1 + 1; i < row2; i++) {
-                for (int j = col1 + 1; j < col2; j++) {
-                    if (this.fields[i][j] != null) {
-                        System.out.println("Вы не можете ходить сквозь другие фигуры!");
-                        return false;
+                if (col1 < col2) {
+                    for (int j = col1 + 1; j < col2; j++) {
+                        if (this.fields[i][j] != null) {
+                            return false;
+                        }
+                        i++;
                     }
-                    i++;
+                } else {
+                    for (int j = col1 - 1; j > col2; j--) {
+                        if (this.fields[i][j] != null) {
+                            return false;
+                        }
+                        i++;
+                    }
                 }
             }
         }
         return true;
-}
+    }
+
+    public boolean isCheck() {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if(this.fields[i][j] == null) {
+                    continue;
+                }
+                if(this.fields[i][j].getColor() == 'w') {
+                    if (this.fields[i][j].canMove(i, j, this.kings[1][0], this.kings[1][1]) &&
+                            isPathEmpty(i, j, this.kings[1][0], this.kings[1][1])) {
+                        return true;
+                    }
+                } else {
+                    if (this.fields[i][j].canMove(i, j, this.kings[0][0], this.kings[0][1]) &&
+                            isPathEmpty(i, j, this.kings[1][0], this.kings[1][1])) {
+                        return true;
+                    }
+                }
+
+            }
+        }
+        return false;
+    }
+
+    public void kingMoving(int row1, int col1) {
+        if (this.fields[row1][col1] instanceof King) {
+            if (this.fields[row1][col1].getColor() == 'w') {
+                this.kings[0][0] = row1;
+                this.kings[0][1] = col1;
+            } else {
+                this.kings[1][0] = row1;
+                this.kings[1][1] = col1;
+            }
+        }
+    }
 
     public boolean move_figure(int row1, int col1, int row2, int col2) {
 
@@ -118,18 +175,27 @@ public class Board {
 
         if (figure.canMove(row1, col1, row2, col2) && this.fields[row2][col2] == null) {
             if (!isPathEmpty(row1, col1, row2, col2)) { // Обработка препятствий
+                System.out.println("Вы не можете ходить сквозь другие фигуры!");
                 return false;
             }
 
             System.out.println("move");
             this.fields[row2][col2] = figure;
             this.fields[row1][col1] = null;
+
+            kingMoving(row2, col2);
+
+            if(isCheck()) {
+                System.out.println("Шах!");
+            }
+
             return true;
         } else if (figure.canAttack(row1, col1, row2, col2) && this.fields[row2][col2] != null && this.fields[row2][col2].getColor() != this.fields[row1][col1].getColor()) {
             if (!isPathEmpty(row1, col1, row2, col2)) { // Обработка препятствий
+                System.out.println("Вы не можете ходить сквозь другие фигуры!");
                 return false;
             }
-            if(this.fields[row2][col2] instanceof King) { // Обработка случая нападения на короля
+            if (this.fields[row2][col2] instanceof King) { // Обработка случая нападения на короля
                 System.out.println("Нельзя атаковать короля!");
                 return false;
             }
@@ -145,6 +211,13 @@ public class Board {
             }
             this.fields[row2][col2] = figure;
             this.fields[row1][col1] = null;
+
+            kingMoving(row2, col2);
+
+            if(isCheck()) {
+                System.out.println("Шах!");
+            }
+
             return true;
         }
         return false;
