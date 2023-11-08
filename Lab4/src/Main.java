@@ -42,6 +42,11 @@ public class Main {
             y2 = Integer.parseInt(coords[2]);
             x2 = Integer.parseInt(coords[3]);
 
+            boolean isKingsChecked = false;
+            if((board.isKingChecked[0] || board.isKingChecked[1])) {
+                isKingsChecked = true;
+            }
+
             while (!board.move_figure(y1, x1, y2, x2)) {
                 System.out.println("Ошибка хода, повторите ввод хода!");
                 inputLine = in.nextLine();
@@ -61,7 +66,15 @@ public class Main {
                     break;
             }
 
+            if(isKingsChecked && board.isCheck()) {
+                System.out.println("Шах и мат!");
+                break;
+            }
 
+            if(!board.isThereAnyMove(board.getColorGaming())) {
+                System.out.println("Пат!");
+                break;
+            }
         }
 
     }

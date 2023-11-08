@@ -11,6 +11,7 @@ import java.util.ArrayList;
 public class Board {
     private final Figure[][] fields = new Figure[8][8];
     private final int[][] kings = new int[2][2];
+    public boolean[] isKingChecked = new boolean[2];
     private final ArrayList<String> takeWhite = new ArrayList<>(16);
     private final ArrayList<String> takeBlack = new ArrayList<>(16);
 
@@ -132,23 +133,27 @@ public class Board {
     public boolean isCheck() {
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
-                if(this.fields[i][j] == null) {
+                if (this.fields[i][j] == null) {
                     continue;
                 }
-                if(this.fields[i][j].getColor() == 'w') {
-                    if (this.fields[i][j].canMove(i, j, this.kings[1][0], this.kings[1][1]) &&
+                if (this.fields[i][j].getColor() == 'w') {
+                    if (this.fields[i][j].canAttack(i, j, this.kings[1][0], this.kings[1][1]) &&
                             isPathEmpty(i, j, this.kings[1][0], this.kings[1][1])) {
+                        isKingChecked[1] = true;
                         return true;
                     }
                 } else {
-                    if (this.fields[i][j].canMove(i, j, this.kings[0][0], this.kings[0][1]) &&
-                            isPathEmpty(i, j, this.kings[1][0], this.kings[1][1])) {
+                    if (this.fields[i][j].canAttack(i, j, this.kings[0][0], this.kings[0][1]) &&
+                            isPathEmpty(i, j, this.kings[0][0], this.kings[0][1])) {
+                        isKingChecked[0] = true;
                         return true;
                     }
                 }
 
             }
         }
+        isKingChecked[0] = false;
+        isKingChecked[1] = false;
         return false;
     }
 
@@ -162,6 +167,24 @@ public class Board {
                 this.kings[1][1] = col1;
             }
         }
+    }
+
+    public boolean isThereAnyMove(char color) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (this.fields[i][j] == null) {
+                    continue;
+                }
+                for (int k = 0; k < 8; k++) {
+                    for (int t = 0; t < 8; t++) {
+                        if (this.fields[i][j].canMove(i, j, k, t)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public boolean move_figure(int row1, int col1, int row2, int col2) {
@@ -185,7 +208,7 @@ public class Board {
 
             kingMoving(row2, col2);
 
-            if(isCheck()) {
+            if (isCheck()) {
                 System.out.println("Шах!");
             }
 
@@ -214,10 +237,9 @@ public class Board {
 
             kingMoving(row2, col2);
 
-            if(isCheck()) {
+            if (isCheck()) {
                 System.out.println("Шах!");
             }
-
             return true;
         }
         return false;
